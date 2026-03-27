@@ -19,15 +19,24 @@ public class Flower extends SceneObject {
 	
 	private final float HEIGHT = 1.0f;
 	private final float WIDTH = 0.1f;
-	private Vector3f colour = new Vector3f(0f, 0.5f, 0f); // Dark Green
+	private Vector3f stemColour = new Vector3f(0f, 0.5f, 0f); // Dark Green
+	private Vector3f petalColour = new Vector3f(1f,1f,0f); // Yellow
 
 	private Vector4f[] vertices;
 	private int vertexBuffer;
 	private int[] indices;
 	private int indexBuffer;
+	private int colorBuffer;
+	
+	private Vector4f position = new Vector4f();
 
 	public Flower(int nPetals) {
-		shader = ShaderLibrary.instance.compileShader(VERTEX_SHADER, FRAGMENT_SHADER);		
+		shader = ShaderLibrary.instance.compileShader(VERTEX_SHADER, FRAGMENT_SHADER);
+		
+		Vector3f[] vertexColors = new Vector3f[4]; // The stem has 4 vertices
+		for (int i = 0; i < vertexColors.length; i++) {
+		    vertexColors[i] = stemColour; // Use stem color for all stem vertices
+		}
 	
 		// make the stem of the flower
 
@@ -57,15 +66,24 @@ public class Flower extends SceneObject {
 		    	0, 1, 2,
 		    	3, 2, 1,
 		};
+	    
+	    createFlowerHead(position, nPetals);
 		    
 		indexBuffer = GLBuffers.createIndexBuffer(indices);
+		colorBuffer = GLBuffers.createBuffer(vertexColors);
+	}
+	
+	public void createFlowerHead(Vector4f position, int nPetals) {
+		FlowerHead flowerHead = new FlowerHead(nPetals, petalColour);
+		flowerHead.setParent(this);	
+		flowerHead.getMatrix().translate(position.x,position.y+1,0.0f);
 	}
 	
 	public void drawSelf(Matrix4f mvpMatrix) {
 		shader.enable();
 		shader.setUniform("u_mvpMatrix", mvpMatrix);
 	    shader.setAttribute("a_position", vertexBuffer);
-	    shader.setUniform("u_colour", colour);	    
+	    shader.setAttribute("a_colour", colorBuffer);    
 	    
 	    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 	    glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);		
